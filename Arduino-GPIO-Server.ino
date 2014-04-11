@@ -101,7 +101,7 @@ void parseCommand() {
 
   String CMDstat;
   int cmdNR;
-  String cmdNRtest = String (cmd.substring(0, ort).toInt());
+  String cmdNRtest = String (cmd.substring(0, ort));
   cmdNR = cmdNRtest.toInt() + 21;
 
   int lange = cmd.length();
@@ -126,7 +126,10 @@ void parseCommand() {
     server.println("For Questions please go to www.labor19.net");
     server.println("Copyright 2014 Jan Koppatscheck, Hendrik Lüth");
     server.println("For privat use only!");   
-
+  }else if(cmdNRtest.equals("A")){
+  int Analog = analogRead(CMDstat.toInt());
+  server.println(cmdNRtest + CMDstat + "." + Analog);
+  
   }
   else if(cmd.equals("get-all")){
     server.println("ID00001");
@@ -146,10 +149,10 @@ void parseCommand() {
   }
   else if(21 < cmdNR < 37){    
     if(CMDstat.equals("1")){
-      digitalWrite(cmdNR, HIGH);  
+      digitalWrite(cmdNR, LOW);  
     }
     else if(CMDstat.equals("0")){
-      digitalWrite(cmdNR, LOW);
+      digitalWrite(cmdNR, HIGH);
     }
   }  
   cmd = "";
