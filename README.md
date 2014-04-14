@@ -2,7 +2,7 @@ Telnet-GPIO
 ===========
 
 This is the Code for a Telnet GPIO-Server based on an Arduino Mega 2560 and the fitting Ethernet-shield.
-
+Please copy the code from the file into your new Arduino Sketch.
 
 
 Here is a list for the Syntax and the commands you have to send to the telnet-GPIO-server:
