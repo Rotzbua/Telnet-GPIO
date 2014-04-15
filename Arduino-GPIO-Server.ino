@@ -9,23 +9,26 @@ This code was written by Jan Koppatscheck (DO6JAN) and Hendrik Lüth (DO9XE).
 #include <Ethernet.h>
 #define MAX_CMD_LENGTH   25
 
+
 byte mac[] = { 
   0x90, 0xA2, 0xDA, 0x00, 0xE3, 0x5B };
 
-IPAddress ip(192, 168, 100, 73);
-IPAddress gateway(192, 168, 100, 1);
+
+IPAddress ip(192, 168, 55, 223);
+IPAddress gateway(192, 168, 55, 1);
 IPAddress subnet(255, 255, 255, 0);
+
 
 EthernetServer server = EthernetServer(23);
 EthernetClient client;
 boolean connected = false;
+
 
 String cmd, senden, senden2, senden3, senden4; 
 int StatDB[10] = {
   0,0,0,0,0,0,0,0,0,0};
 int StatAna[16] = {
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; 
-
 
 void setup()
 {
@@ -37,17 +40,21 @@ void setup()
     digitalWrite(i, HIGH);
   }
 
+
   for (int x=38;x<48;x++) // definiert die Pins 38-47 als input
   {
     pinMode(x, INPUT);
   }
 
+
 }
+
 
 void loop()
 {
   while(1){
     client = server.available();
+
 
     if (client == true) {
       if (!connected) {
@@ -55,12 +62,15 @@ void loop()
         connected = true;
       }
 
+
       if (client.available() > 0) {
         readTelnetCommand(client.read());
       }
     }
 
+
     // check for inputs
+
 
     for (int k=38;k<48;k++)
     {
@@ -73,6 +83,7 @@ void loop()
         senden = String(oNR2) + ".";
       }
 
+
       if(digitalRead(k) != StatDB[oNR]) {
         StatDB[oNR] = !StatDB[oNR];
         server.println(senden + String(StatDB[oNR]));
@@ -83,24 +94,27 @@ void loop()
       int Analog = analogRead(z);
       int dif = Analog - StatAna[z];
       if (-10 < dif < 10){
-        StatAna[z] = Analog;
+        Analog = 0;
       }
       else{
         server.println("A" + String(z) + "." + Analog);
-        StatAna[z] = Analog;
-
+        StatAna[z] = Analog;      
       }
     } 
   }
 }
 
+
 void readTelnetCommand(char c) {
+
 
   if(cmd.length() == MAX_CMD_LENGTH) {
     cmd = "";
   }
 
+
   cmd += c;
+
 
   if(c == '\n') {
     if(cmd.length() > 2) {
@@ -111,6 +125,7 @@ void readTelnetCommand(char c) {
   }
 }
 
+
 void parseCommand() {
   int ort=cmd.indexOf(".");
   String CMDstat;
@@ -118,9 +133,9 @@ void parseCommand() {
   String cmdNRtest = String (cmd.substring(0, ort));
   cmdNR = cmdNRtest.toInt() + 21;
 
+
   int lange = cmd.length();
   CMDstat=cmd.substring(lange, lange-1);
-
 
   if(cmd.equals("kill")){
     for (int x=22;x<38;x++) 
@@ -128,19 +143,17 @@ void parseCommand() {
       digitalWrite(x, HIGH);
     }
   }
-
   else if(cmd.equals("help")) {
     server.println("-=* GPIO Server Help/Info *=-");
     server.println("This GPIO Server is based on a Arduino Mega 2560");
     server.println("The Programm was written by DO6JAN an DO9XE");
     server.println("For Questions please go to www.labor19.net");
     server.println("Copyright 2014 Jan Koppatscheck, Hendrik Lüth");
-    server.println("For privat use only!");   
-
-
+    server.println("For privat use only!"); 
   }  
   else if(cmd.equals("get-all")){
     server.println("ID00001");
+
 
     for (int g=0;g<10;g++){
       int oNR3 = g + 1;
