@@ -132,6 +132,10 @@ void parseCommand() {
   int cmdNR;
   String cmdNRtest = String (cmd.substring(0, ort));
   cmdNR = cmdNRtest.toInt() + 21;
+  
+  if(ort == 0){
+  return;
+  }
 
 
   int lange = cmd.length();
