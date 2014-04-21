@@ -133,7 +133,7 @@ void parseCommand() {
   String cmdNRtest = String (cmd.substring(0, ort));
   cmdNR = cmdNRtest.toInt() + 21;
   
-  if(ort == 0){
+  if(ort == -1){
   return;
   }
 
