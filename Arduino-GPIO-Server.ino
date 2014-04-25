@@ -3,19 +3,19 @@ This code was written by Jan Koppatscheck (DO6JAN) and Hendrik Lüth (DO9XE).
  The main-structure of the code comes from: http://blog.bouni.de/blog/2012/06/25/a-arduino-telnet-server/
  For Information please go to http://www.labor19.de/ or write to kontakt@lueth-labs.de.
  If you have any suggestions how to make the code more effective and smaller please write us.
- Thank you for using our code :)
+ Thank you for using our code 
  */
 #include <SPI.h>
 #include <Ethernet.h>
-#define MAX_CMD_LENGTH   25
+#define MAX_CMD_LENGTH 25
 
 
-byte mac[] = { 
+byte mac[] = {
   0x90, 0xA2, 0xDA, 0x00, 0xE3, 0x5B };
 
 
 IPAddress ip(192, 168, 55, 223);
-IPAddress gateway(192, 168, 55, 1);
+IPAddress gateway(192, 168, 55, 10);
 IPAddress subnet(255, 255, 255, 0);
 
 
@@ -23,12 +23,17 @@ EthernetServer server = EthernetServer(23);
 EthernetClient client;
 boolean connected = false;
 
+//deklarieren der einzelnen Variablentypen
+String cmd, senden, senden2, senden3, senden4, CMDstat, cmdNRstr;
+int ort, cmdNR;
 
-String cmd, senden, senden2, senden3, senden4; 
-int StatDB[10] = {
+//Deklarieren der Arrays, die hier als Datenbank misbraucht werden
+int StatIn[10] = {
   0,0,0,0,0,0,0,0,0,0};
 int StatAna[16] = {
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; 
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int StatOut[16] = {
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 void setup()
 {
@@ -84,9 +89,9 @@ void loop()
       }
 
 
-      if(digitalRead(k) != StatDB[oNR]) {
-        StatDB[oNR] = !StatDB[oNR];
-        server.println(senden + String(StatDB[oNR]));
+      if(digitalRead(k) != StatIn[oNR]) {
+        StatIn[oNR] = !StatIn[oNR];
+        server.println(senden + String(StatIn[oNR]));
       }
     }
     //check for analog inputs
@@ -98,9 +103,9 @@ void loop()
       }
       else{
         server.println("A" + String(z) + "." + Analog);
-        StatAna[z] = Analog;      
+        StatAna[z] = Analog;
       }
-    } 
+    }
   }
 }
 
@@ -127,61 +132,88 @@ void readTelnetCommand(char c) {
 
 
 void parseCommand() {
-  int ort=cmd.indexOf(".");
-  String CMDstat;
-  int cmdNR;
-  String cmdNRtest = String (cmd.substring(0, ort));
-  cmdNR = cmdNRtest.toInt() + 21;
-  
-  if(ort == -1){
-  return;
-  }
 
+  ort=cmd.indexOf(".");
+  cmdNRstr = String (cmd.substring(0, ort));
+  cmdNR = cmdNRstr.toInt() + 21;
 
   int lange = cmd.length();
   CMDstat=cmd.substring(lange, lange-1);
 
+  if (ort==-1){
+    ControllCommand;
+  }
+  else{
+    SwitchCommand;
+  }
+
+
+  cmd = "";
+}
+
+//Die Folgende Funktion wertet die Schaltkommandos aus
+void SwitchCommand(){
+
+  if(21 < cmdNR < 37){
+    if(CMDstat.equals("1")){
+      digitalWrite(cmdNR, LOW);
+      StatOut[cmdNRstr.toInt()]=1;
+    }
+    else if(CMDstat.equals("0")){
+      digitalWrite(cmdNR, HIGH);
+      StatOut[cmdNRstr.toInt()] = 0;
+    }
+  }
+}
+
+
+//Die Folgende Funktion wertet die Steuerbefehle aus
+void ControllCommand(){
   if(cmd.equals("kill")){
-    for (int x=22;x<38;x++) 
+    for (int x=22;x<38;x++)
     {
       digitalWrite(x, HIGH);
     }
   }
-  else if(cmd.equals("help")) {
+  else if(cmd.equals("help")||cmd.equals("--help")||cmd.equals("-h")||cmd.equals("--h")) {
     server.println("-=* GPIO Server Help/Info *=-");
     server.println("This GPIO Server is based on a Arduino Mega 2560");
     server.println("The Programm was written by DO6JAN an DO9XE");
     server.println("For Questions please go to www.labor19.net");
     server.println("Copyright 2014 Jan Koppatscheck, Hendrik Lüth");
-    server.println("For privat use only!"); 
-  }  
+    server.println("\n\rCommands:");
+    server.println("kill      switch all Outputs off");
+    server.println("XX.1/0    Output XX On 1 / Off 0");
+    server.println("get-all   displays all inputs, outputs and sever ID");
+    server.println("help      this (also: --help , -h , --h)");
+
+  }
   else if(cmd.equals("get-all")){
     server.println("ID00001");
-
 
     for (int g=0;g<10;g++){
       int oNR3 = g + 1;
       if (oNR3 < 10){
-        senden3 = "0" + String(oNR3) + ".";
+        senden3 = "I0" + String(oNR3) + ".";
       }
       else{
-        senden3 = String(oNR3) + ".";
+        senden3 = "I" + String(oNR3) + ".";
       }
-      senden4 = String(StatDB[g]);
-      server.println(senden3 + senden4);
+      server.println(senden3 + String(StatIn[g]));
     }
     for (int l=8;l<12;l++){
       int Analog = analogRead(l);
       server.println("A" + String(l) + "." + Analog);
     }
+    for (int q=0;q<16;q++){
+      int oNR4 = q + 1;
+      if (oNR4 < 10){
+        senden4 = "O0" + String(oNR4) + ".";
+      }
+      else{
+        senden4 = "O" + String(oNR4) + ".";
+      }
+      server.println(senden4 + String(StatOut[q]));
+    }    
   }
-  else if(21 < cmdNR < 37){    
-    if(CMDstat.equals("1")){
-      digitalWrite(cmdNR, LOW);  
-    }
-    else if(CMDstat.equals("0")){
-      digitalWrite(cmdNR, HIGH);
-    }
-  }  
-  cmd = "";
 }
